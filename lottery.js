@@ -119,6 +119,28 @@ class LotterySystem {
         document.getElementById('clearDataBtn').addEventListener('click', () => {
             this.clearStorage();
         });
+
+        // 添加悬浮菜单的点击事件
+        const floatMenu = document.querySelector('.float-menu');
+        const floatMenuToggle = document.querySelector('.float-menu-toggle');
+        
+        floatMenuToggle.addEventListener('click', () => {
+            floatMenu.classList.toggle('active');
+        });
+
+        // 点击其他地方时关闭菜单
+        document.addEventListener('click', (e) => {
+            if (!floatMenu.contains(e.target)) {
+                floatMenu.classList.remove('active');
+            }
+        });
+
+        // ESC键关闭菜单
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                floatMenu.classList.remove('active');
+            }
+        });
     }
 
     async handleFileUpload(event) {

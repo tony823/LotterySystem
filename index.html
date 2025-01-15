@@ -67,10 +67,6 @@
         <div id="lotteryPanel" class="panel">
             <div class="header">
                 <span id="currentRound">第1轮抽奖</span>
-                <div class="header-controls">
-                    <button id="clearDataBtn" class="danger-btn">清除数据</button>
-                    <button id="settingsBtn">设置</button>
-                </div>
             </div>
             <div class="main-content">
                 <div id="nameDisplay"></div>
@@ -82,6 +78,15 @@
                 </div>
             </div>
             <div id="winnerList"></div>
+        </div>
+
+        <!-- 将按钮移到新的悬浮菜单中 -->
+        <div class="float-menu">
+            <div class="float-menu-toggle">···</div>
+            <div class="float-menu-content">
+                <button id="settingsBtn">设置</button>
+                <button id="clearDataBtn" class="danger-btn">清除数据</button>
+            </div>
         </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
