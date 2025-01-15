@@ -1,0 +1,327 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: #f0f0f0;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.panel {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+#settingsPanel {
+    display: none;
+}
+
+.settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+}
+
+#nameDisplay {
+    font-size: 72px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.name-text {
+    font-weight: bold;
+    line-height: 1.2;
+}
+
+.department-text {
+    font-size: 36px;
+    color: #666;
+    margin-top: 10px;
+}
+
+.controls {
+    display: flex;
+    gap: 20px;
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background: #007bff;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+#winnerList {
+    position: fixed;
+    bottom: 0;
+    right: 20px;
+    width: 300px;
+    max-height: 500px;
+    background: white;
+    border-radius: 10px 10px 0 0;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+    transform: translateY(calc(100% - 40px));
+    z-index: 1000;
+}
+
+#winnerList.expanded {
+    transform: translateY(0);
+}
+
+.winner-list-header {
+    padding: 10px;
+    background: #007bff;
+    color: white;
+    border-radius: 10px 10px 0 0;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.winner-list-header:hover {
+    background: #0056b3;
+}
+
+.winner-list-content {
+    padding: 15px;
+    overflow-y: auto;
+    max-height: 460px;
+}
+
+.toggle-icon {
+    transition: transform 0.3s ease;
+}
+
+#winnerList.expanded .toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* 调整中奖名单中的获奖者样式 */
+.winner-list-content .winner-item {
+    font-size: 16px;
+    padding: 8px;
+    margin: 5px 0;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.winner-list-content .winner-item .name {
+    font-size: 18px;
+}
+
+.winner-list-content .winner-item .department {
+    font-size: 14px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#currentRound {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.lottery-3d {
+    perspective: 1000px;
+    transform-style: preserve-3d;
+}
+
+#nameDisplay {
+    transition: transform 0.1s;
+}
+
+.rolling {
+    animation: roll 0.05s infinite;
+}
+
+@keyframes roll {
+    0% { transform: rotateX(0deg); }
+    100% { transform: rotateX(360deg); }
+}
+
+.winners-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    min-height: 60vh;
+    padding: 20px;
+}
+
+.winner-item {
+    flex: 0 1 auto;
+    min-width: 200px;
+    max-width: 300px;
+    margin: 10px;
+    padding: 20px;
+    text-align: center;
+    animation: winner-show 0.5s ease-out;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.winner-item .name {
+    font-size: 48px;
+    font-weight: bold;
+    color: #ff4444;
+    margin-bottom: 5px;
+}
+
+.winner-item .department {
+    font-size: 24px;
+    color: #666;
+}
+
+@keyframes winner-show {
+    0% {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2) rotate(10deg);
+    }
+    100% {
+        transform: scale(1) rotate(0);
+        opacity: 1;
+    }
+}
+
+.rolling .winner-item {
+    animation: roll-item 0.05s infinite;
+}
+
+@keyframes roll-item {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+/* 调整容器在滚动时的样式 */
+.rolling .winners-container {
+    min-height: 40vh;
+}
+
+/* 调整滚动时的显示大小 */
+.rolling .winner-item .name {
+    font-size: 36px;
+}
+
+.rolling .winner-item .department {
+    font-size: 18px;
+}
+
+/* 优化中奖时的显示效果 */
+.winner-item {
+    transition: all 0.3s ease;
+}
+
+/* 修改中奖名单样式 */
+.round-section {
+    margin: 5px 0;
+    border-radius: 5px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.round-header {
+    padding: 10px;
+    background: #f0f0f0;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.round-header:hover {
+    background: #e0e0e0;
+}
+
+.round-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.round-section.expanded .round-content {
+    max-height: 500px;
+}
+
+.round-section .toggle-icon {
+    transition: transform 0.3s ease;
+}
+
+.round-section.expanded .toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* 调整中奖名单中的获奖者样式 */
+.round-content .winner-item {
+    padding: 8px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.round-content .winner-item:last-child {
+    border-bottom: none;
+}
+
+.round-content .winner-item .name {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+.round-content .winner-item .department {
+    font-size: 14px;
+    color: #666;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.export-btn {
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.2);
+}
+
+.export-btn:hover {
+    background: rgba(255,255,255,0.3);
+} 
