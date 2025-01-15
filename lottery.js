@@ -4,7 +4,7 @@ class LotterySystem {
         this.winners = new Map(); // 存储每轮的获奖者
         this.currentRound = 1;
         this.totalRounds = 1;
-        this.winnersPerRound = 1;
+        this.winnersCount = 1;
         this.isRunning = false;
         this.timer = null;
         this.roundStatus = new Map(); // 记录每轮抽奖状态
@@ -29,8 +29,8 @@ class LotterySystem {
         this.lotteryPanel = document.getElementById('lotteryPanel');
         this.fileInput = document.getElementById('fileInput');
         this.bgInput = document.getElementById('bgInput');
-        this.roundCount = document.getElementById('roundCount');
-        this.winnersPerRound = document.getElementById('winnersPerRound');
+        this.roundCountInput = document.getElementById('roundCount');
+        this.winnersPerRoundInput = document.getElementById('winnersPerRound');
         this.nameDisplay = document.getElementById('nameDisplay');
         this.currentRoundDisplay = document.getElementById('currentRound');
         this.winnerList = document.getElementById('winnerList');
@@ -155,8 +155,9 @@ class LotterySystem {
     }
 
     saveSettings() {
-        this.totalRounds = parseInt(this.roundCount.value) || 1;
-        this.winnersPerRound = parseInt(this.winnersPerRound.value) || 1;
+        // 保存设置
+        this.totalRounds = parseInt(this.roundCountInput.value) || 1;
+        this.winnersCount = parseInt(this.winnersPerRoundInput.value) || 1;
         
         // 保存奖品信息
         this.prizes = [];
@@ -168,8 +169,15 @@ class LotterySystem {
             }
         });
 
-        console.log('保存的奖品信息：', this.prizes);
+        // 重置当前轮次的状态
+        if (this.winners.has(this.currentRound)) {
+            this.winners.delete(this.currentRound);
+        }
+        this.roundStatus.set(this.currentRound, false);
+
+        // 更新显示
         this.settingsPanel.style.display = 'none';
+        this.nameDisplay.textContent = '准备开始抽奖';
         this.updateDisplay();
         this.updateButtonStatus();
     }
@@ -183,49 +191,54 @@ class LotterySystem {
     }
 
     startLottery() {
+        // 检查当前轮次是否已抽奖
         if (this.roundStatus.get(this.currentRound)) {
             alert('本轮已经抽过奖了！');
             return;
         }
 
-        console.log('当前人员列表:', this.people);
+        // 检查人员名单
         if (!this.people || this.people.length === 0) {
             alert('请先导入人员名单！');
             return;
         }
 
+        // 获取可抽奖的人员
         const availablePeople = this.people.filter(p => !p.hasWon);
         if (availablePeople.length === 0) {
             alert('所有人员都已中奖！');
             return;
         }
 
-        if (availablePeople.length < this.winnersPerRound) {
-            alert(`剩余人数不足${this.winnersPerRound}人！`);
+        // 检查剩余人数是否足够
+        if (availablePeople.length < this.winnersCount) {
+            alert(`剩余人数不足${this.winnersCount}人！`);
             return;
         }
 
+        // 开始抽奖
         this.isRunning = true;
         this.startBtn.textContent = '停止';
         this.nameDisplay.classList.add('rolling');
-        
+
         // 创建临时数组用于滚动显示
         let tempWinners = [];
-        for (let i = 0; i < this.winnersPerRound; i++) {
+        for (let i = 0; i < this.winnersCount; i++) {
             tempWinners.push({
                 name: '',
                 department: ''
             });
         }
-        
-        // 滚动效果同时显示多个位置
+
+        // 滚动效果
         this.timer = setInterval(() => {
+            // 随机选择人员显示
             tempWinners = tempWinners.map(() => {
-                const randomPerson = availablePeople[Math.floor(Math.random() * availablePeople.length)];
-                return randomPerson;
+                const randomIndex = Math.floor(Math.random() * availablePeople.length);
+                return availablePeople[randomIndex];
             });
 
-            // 显示所有位置的滚动
+            // 更新显示
             this.nameDisplay.innerHTML = `
                 <div class="winners-container">
                     ${tempWinners.map(person => `
@@ -248,7 +261,7 @@ class LotterySystem {
         const availablePeople = this.people.filter(p => !p.hasWon);
         const winners = [];
         
-        for (let i = 0; i < this.winnersPerRound && availablePeople.length > 0; i++) {
+        for (let i = 0; i < this.winnersCount && availablePeople.length > 0; i++) {
             const randomIndex = Math.floor(Math.random() * availablePeople.length);
             const winner = availablePeople.splice(randomIndex, 1)[0];
             winner.hasWon = true;
@@ -467,7 +480,7 @@ class LotterySystem {
 
         const containerWidth = container.clientWidth;
         const containerHeight = window.innerHeight * 0.6; // 使用60%的视窗高度
-        const count = this.winnersPerRound;
+        const count = this.winnersCount;
 
         // 计算最佳的行列数
         let cols = Math.ceil(Math.sqrt(count));

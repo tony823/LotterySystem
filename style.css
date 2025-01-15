@@ -15,7 +15,7 @@ body {
 }
 
 .panel {
-    background: white;
+    background: rgba(255, 255, 255, 0.5);
     border-radius: 10px;
     padding: 20px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -24,6 +24,7 @@ body {
 
 #settingsPanel {
     display: none;
+    background: white;
 }
 
 .settings-content {
@@ -192,13 +193,14 @@ button:hover {
     padding: 15px;
     text-align: center;
     animation: winner-show 0.5s ease-out;
-    background: rgba(255, 255, 255, 0.9);
+    background: white;
     border-radius: 15px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .winner-item .name {
@@ -211,6 +213,7 @@ button:hover {
     justify-content: center;
     align-items: center;
     text-align: center;
+    text-shadow: none;
 }
 
 .winner-item .department {
@@ -220,6 +223,7 @@ button:hover {
     justify-content: center;
     align-items: center;
     text-align: center;
+    text-shadow: none;
 }
 
 @keyframes winner-show {
@@ -456,7 +460,7 @@ button:hover {
     text-overflow: ellipsis;
     white-space: nowrap;
     padding: 3px 6px;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.95);
     border-radius: 4px;
     border: 1px solid rgba(255, 136, 0, 0.2);
     display: flex;
@@ -489,4 +493,19 @@ button:disabled {
     background: #cccccc;
     cursor: not-allowed;
     opacity: 0.7;
+}
+
+/* 修改中奖名单中的卡片样式，确保完全不透明 */
+#winnerList .winner-item,
+.round-content .winner-item {
+    background: white;  /* 使用完全不透明的白色 */
+    border: none;
+    box-shadow: none;
+}
+
+/* 修改主抽奖区域的卡片样式 */
+.winners-container .winner-item {
+    background: white;  /* 主抽奖区域的卡片也保持不透明 */
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 } 
