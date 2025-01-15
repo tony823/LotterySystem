@@ -628,4 +628,92 @@ button.active {
 
 #startBtn {
     transition: transform 0.2s, background-color 0.3s;
+}
+
+/* 按钮提示样式 */
+button[title] {
+    position: relative;
+}
+
+button[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+}
+
+/* 添加小箭头 */
+button[title]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.8);
+    margin-bottom: -5px;
+}
+
+/* 控制按钮容器样式 */
+.controls-container {
+    position: relative;
+    width: 100%;
+    height: 50px;  /* 设置固定高度以保持布局 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 添加提示图形 */
+.controls-container::after {
+    content: '';
+    position: absolute;
+    width: 200px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(2px);
+}
+
+/* 当按钮显示时隐藏提示图形 */
+.controls-container:hover::after,
+.controls:focus-within ~ .controls-container::after,
+.controls.active ~ .controls-container::after {
+    opacity: 0;
+}
+
+.controls {
+    position: absolute;
+    display: flex;
+    gap: 20px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    padding: 5px;
+    z-index: 1;  /* 确保按钮在提示图形上方 */
+}
+
+/* 鼠标移入时显示按钮 */
+.controls-container:hover .controls {
+    opacity: 1;
+}
+
+/* 当按钮处于活动状态时保持显示 */
+.controls:focus-within {
+    opacity: 1;
+}
+
+/* 当抽奖正在进行时保持显示 */
+.controls.active {
+    opacity: 1;
 } 

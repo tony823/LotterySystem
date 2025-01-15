@@ -331,6 +331,8 @@ class LotterySystem {
         } else {
             this.startLottery();
         }
+        // 添加或移除活动状态类
+        document.querySelector('.controls').classList.toggle('active', this.isRunning);
     }
 
     startLottery() {
