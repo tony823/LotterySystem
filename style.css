@@ -618,4 +618,14 @@ button:disabled {
     min-width: 120px;  /* 增加最小宽度 */
     text-align: center;
     white-space: nowrap;  /* 确保按钮文字不换行 */
+}
+
+/* 按钮按下效果 */
+button.active {
+    transform: scale(0.95);
+    transition: transform 0.2s;
+}
+
+#startBtn {
+    transition: transform 0.2s, background-color 0.3s;
 } 

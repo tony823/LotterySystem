@@ -78,13 +78,6 @@ class LotterySystem {
         });
         this.drawPrizeBtn.addEventListener('click', this.drawAllPrizes.bind(this));
         
-        // 添加空格键控制
-        document.addEventListener('keyup', (e) => {
-            if (e.code === 'Space') {
-                this.toggleLottery();
-            }
-        });
-
         // 添加取消按钮事件
         this.cancelSettingsBtn.addEventListener('click', () => {
             // 恢复原始设置值
@@ -139,6 +132,68 @@ class LotterySystem {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 floatMenu.classList.remove('active');
+            }
+        });
+
+        // 添加键盘事件监听
+        document.addEventListener('keyup', (e) => {
+            // 只在设置面板关闭时响应键盘
+            if (this.settingsPanel.style.display === 'block') return;
+
+            // 阻止空格键的默认行为
+            if (e.code === 'Space') {
+                e.preventDefault();  // 阻止默认行为
+            }
+
+            switch (e.code) {
+                case 'Space':  // 空格键 - 开始/停止抽奖
+                    if (!this.startBtn.disabled) {
+                        this.toggleLottery();  // 直接使用 toggleLottery 方法
+                        this.startBtn.classList.add('active');
+                        setTimeout(() => {
+                            this.startBtn.classList.remove('active');
+                        }, 200);
+                    }
+                    break;
+                    
+                case 'ArrowUp':    // 向上键 - 上一轮
+                case 'ArrowLeft':  // 向左键 - 上一轮
+                    if (!this.prevRoundBtn.disabled) {
+                        this.prevRoundBtn.click();
+                        this.prevRoundBtn.classList.add('active');
+                        setTimeout(() => {
+                            this.prevRoundBtn.classList.remove('active');
+                        }, 200);
+                    }
+                    break;
+                    
+                case 'ArrowDown':  // 向下键 - 下一轮
+                case 'ArrowRight': // 向右键 - 下一轮
+                    if (!this.nextRoundBtn.disabled) {
+                        this.nextRoundBtn.click();
+                        this.nextRoundBtn.classList.add('active');
+                        setTimeout(() => {
+                            this.nextRoundBtn.classList.remove('active');
+                        }, 200);
+                    }
+                    break;
+                    
+                case 'Enter':  // 回车键 - 抽取奖品
+                    if (!this.drawPrizeBtn.disabled) {
+                        this.drawPrizeBtn.click();
+                        this.drawPrizeBtn.classList.add('active');
+                        setTimeout(() => {
+                            this.drawPrizeBtn.classList.remove('active');
+                        }, 200);
+                    }
+                    break;
+            }
+        });
+
+        // 添加 keydown 事件监听器来阻止空格键的默认行为
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && this.settingsPanel.style.display !== 'block') {
+                e.preventDefault();  // 阻止默认行为
             }
         });
     }
