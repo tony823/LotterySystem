@@ -56,7 +56,10 @@
                     </div>
                     <button id="addPrize">添加奖品</button>
                 </div>
-                <button id="saveSettings">保存设置</button>
+                <div class="settings-buttons">
+                    <button id="saveSettings">保存设置</button>
+                    <button id="cancelSettings" class="cancel-btn">取消</button>
+                </div>
             </div>
         </div>
 
@@ -64,7 +67,10 @@
         <div id="lotteryPanel" class="panel">
             <div class="header">
                 <span id="currentRound">第1轮抽奖</span>
-                <button id="settingsBtn">设置</button>
+                <div class="header-controls">
+                    <button id="clearDataBtn" class="danger-btn">清除数据</button>
+                    <button id="settingsBtn">设置</button>
+                </div>
             </div>
             <div class="main-content">
                 <div id="nameDisplay"></div>

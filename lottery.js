@@ -21,6 +21,9 @@ class LotterySystem {
                 this.calculateCardSize();
             }
         });
+        
+        // 尝试从本地存储恢复数据
+        this.restoreFromStorage();
     }
 
     initializeElements() {
@@ -41,6 +44,7 @@ class LotterySystem {
         this.nextRoundBtn = document.getElementById('nextRound');
         this.settingsBtn = document.getElementById('settingsBtn');
         this.saveSettingsBtn = document.getElementById('saveSettings');
+        this.cancelSettingsBtn = document.getElementById('cancelSettings');
         this.drawPrizeBtn = document.getElementById('drawPrizeBtn'); // 移到这里
     }
 
@@ -50,8 +54,28 @@ class LotterySystem {
         this.startBtn.addEventListener('click', this.toggleLottery.bind(this));
         this.prevRoundBtn.addEventListener('click', this.previousRound.bind(this));
         this.nextRoundBtn.addEventListener('click', this.nextRound.bind(this));
-        this.settingsBtn.addEventListener('click', () => this.settingsPanel.style.display = 'block');
-        this.saveSettingsBtn.addEventListener('click', this.saveSettings.bind(this));
+        this.settingsBtn.addEventListener('click', () => {
+            if (this.winners.size > 0) {
+                if (!confirm('修改设置将清空所有轮次的抽奖结果，是否继续？')) {
+                    return;
+                }
+            }
+            this.settingsPanel.style.display = 'block';
+            document.body.classList.add('settings-open');
+        });
+        this.saveSettingsBtn.addEventListener('click', () => {
+            const newRounds = parseInt(this.roundCountInput.value) || 1;
+            const newWinnersCount = parseInt(this.winnersPerRoundInput.value) || 1;
+            
+            if (this.winners.size > 0 && 
+                (newRounds !== this.totalRounds || newWinnersCount !== this.winnersCount)) {
+                if (!confirm('确定要保存修改吗？这将清空所有轮次的抽奖结果！')) {
+                    return;
+                }
+            }
+            
+            this.saveSettings();
+        });
         this.drawPrizeBtn.addEventListener('click', this.drawAllPrizes.bind(this));
         
         // 添加空格键控制
@@ -59,6 +83,41 @@ class LotterySystem {
             if (e.code === 'Space') {
                 this.toggleLottery();
             }
+        });
+
+        // 添加取消按钮事件
+        this.cancelSettingsBtn.addEventListener('click', () => {
+            // 恢复原始设置值
+            this.roundCountInput.value = this.totalRounds;
+            this.winnersPerRoundInput.value = this.winnersCount;
+            
+            // 恢复原始奖品设置
+            const prizesList = document.querySelector('.prizes-list');
+            prizesList.innerHTML = '';
+            this.prizes.forEach(prize => {
+                const prizeItem = document.createElement('div');
+                prizeItem.className = 'prize-item';
+                prizeItem.innerHTML = `
+                    <input type="text" placeholder="奖品名称" class="prize-name" value="${prize.name}">
+                    <input type="number" placeholder="数量" class="prize-count" min="1" value="${prize.count}">
+                    <button class="remove-prize">删除</button>
+                `;
+                prizesList.appendChild(prizeItem);
+
+                // 添加删除按钮事件
+                prizeItem.querySelector('.remove-prize').addEventListener('click', () => {
+                    prizeItem.remove();
+                });
+            });
+            
+            // 关闭设置面板
+            this.settingsPanel.style.display = 'none';
+            document.body.classList.remove('settings-open');
+        });
+
+        // 添加清除数据按钮事件
+        document.getElementById('clearDataBtn').addEventListener('click', () => {
+            this.clearStorage();
         });
     }
 
@@ -129,8 +188,7 @@ class LotterySystem {
             }
 
             if (this.people.length > 0) {
-                console.log('导入的数据:', this.people);
-                this.nameDisplay.textContent = '准备开始抽奖';
+                this.setReadyText();
                 alert(`成功导入${this.people.length}个人员信息${workbook.SheetNames.length > 1 ? '和奖品信息' : ''}`);
             }
 
@@ -169,17 +227,25 @@ class LotterySystem {
             }
         });
 
-        // 重置当前轮次的状态
-        if (this.winners.has(this.currentRound)) {
-            this.winners.delete(this.currentRound);
-        }
-        this.roundStatus.set(this.currentRound, false);
+        // 重置所有抽奖状态
+        this.winners.clear();  // 清空所有获奖记录
+        this.roundStatus.clear();  // 清空所有轮次状态
+        this.currentRound = 1;  // 重置当前轮次
+        
+        // 重置所有人员的中奖状态
+        this.people.forEach(person => {
+            person.hasWon = false;
+        });
 
         // 更新显示
         this.settingsPanel.style.display = 'none';
-        this.nameDisplay.textContent = '准备开始抽奖';
+        document.body.classList.remove('settings-open');
+        this.setReadyText();
         this.updateDisplay();
         this.updateButtonStatus();
+        
+        // 保存状态
+        this.saveToStorage();
     }
 
     toggleLottery() {
@@ -302,6 +368,9 @@ class LotterySystem {
         
         // 更新所有按钮状态
         this.updateButtonStatus();
+        
+        // 保存状态
+        this.saveToStorage();
     }
 
     // 添加中奖音效（可选）
@@ -379,11 +448,10 @@ class LotterySystem {
             this.updateDisplay();
             this.updateButtonStatus();
             
-            // 如果这轮已经抽过奖，显示结果
             if (this.roundStatus.get(this.currentRound)) {
                 this.updateWinnerDisplay();
             } else {
-                this.nameDisplay.textContent = '准备开始抽奖';
+                this.setReadyText();
             }
         }
     }
@@ -394,11 +462,10 @@ class LotterySystem {
             this.updateDisplay();
             this.updateButtonStatus();
             
-            // 如果这轮已经抽过奖，显示结果
             if (this.roundStatus.get(this.currentRound)) {
                 this.updateWinnerDisplay();
             } else {
-                this.nameDisplay.textContent = '准备开始抽奖';
+                this.setReadyText();
             }
         }
     }
@@ -571,6 +638,9 @@ class LotterySystem {
         
         // 更新按钮状态
         this.updateButtonStatus();
+        
+        // 保存状态
+        this.saveToStorage();
     }
 
     // 为单个获奖者抽取奖品
@@ -603,6 +673,90 @@ class LotterySystem {
 
         // 重新计算卡片大小
         this.calculateCardSize();
+    }
+
+    // 添加设置准备文本的方法
+    setReadyText() {
+        this.nameDisplay.innerHTML = `
+            <div class="winners-container">
+                <div class="winner-item" style="animation: ready-pulse 2s infinite">
+                    <div class="name" style="color: #ff4444; font-size: 48px;">准备开始抽奖</div>
+                </div>
+            </div>
+        `;
+    }
+
+    // 添加保存到本地存储的方法
+    saveToStorage() {
+        const data = {
+            people: this.people,
+            winners: Array.from(this.winners.entries()),
+            currentRound: this.currentRound,
+            totalRounds: this.totalRounds,
+            winnersCount: this.winnersCount,
+            roundStatus: Array.from(this.roundStatus.entries()),
+            prizes: this.prizes
+        };
+        localStorage.setItem('lotteryData', JSON.stringify(data));
+    }
+
+    // 添加从本地存储恢复的方法
+    restoreFromStorage() {
+        const savedData = localStorage.getItem('lotteryData');
+        if (savedData) {
+            try {
+                const data = JSON.parse(savedData);
+                this.people = data.people;
+                this.winners = new Map(data.winners);
+                this.currentRound = data.currentRound;
+                this.totalRounds = data.totalRounds;
+                this.winnersCount = data.winnersCount;
+                this.roundStatus = new Map(data.roundStatus);
+                this.prizes = data.prizes;
+
+                // 恢复显示
+                this.updateDisplay();
+                if (this.roundStatus.get(this.currentRound)) {
+                    this.updateWinnerDisplay();
+                } else {
+                    this.setReadyText();
+                }
+
+                // 恢复设置面板的值
+                this.roundCountInput.value = this.totalRounds;
+                this.winnersPerRoundInput.value = this.winnersCount;
+
+                // 恢复奖品列表
+                const prizesList = document.querySelector('.prizes-list');
+                prizesList.innerHTML = '';
+                this.prizes.forEach(prize => {
+                    const prizeItem = document.createElement('div');
+                    prizeItem.className = 'prize-item';
+                    prizeItem.innerHTML = `
+                        <input type="text" placeholder="奖品名称" class="prize-name" value="${prize.name}">
+                        <input type="number" placeholder="数量" class="prize-count" min="1" value="${prize.count}">
+                        <button class="remove-prize">删除</button>
+                    `;
+                    prizesList.appendChild(prizeItem);
+
+                    // 添加删除按钮事件
+                    prizeItem.querySelector('.remove-prize').addEventListener('click', () => {
+                        prizeItem.remove();
+                    });
+                });
+            } catch (error) {
+                console.error('恢复数据失败:', error);
+                this.clearStorage();
+            }
+        }
+    }
+
+    // 添加清除存储的方法
+    clearStorage() {
+        if (confirm('确定要清除所有抽奖数据吗？此操作不可恢复！')) {
+            localStorage.removeItem('lotteryData');
+            location.reload(); // 刷新页面以重置所有状态
+        }
     }
 }
 

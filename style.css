@@ -3,6 +3,12 @@ body {
     padding: 0;
     font-family: Arial, sans-serif;
     background: #f0f0f0;
+    overflow: hidden;
+}
+
+/* 当设置面板显示时允许滚动 */
+body.settings-open {
+    overflow: auto;
 }
 
 .container {
@@ -118,6 +124,25 @@ button:hover {
     padding: 15px;
     overflow-y: auto;
     max-height: 460px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 123, 255, 0.5) transparent;
+}
+
+.winner-list-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.winner-list-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.winner-list-content::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 123, 255, 0.5);
+    border-radius: 3px;
+}
+
+.winner-list-content::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 123, 255, 0.7);
 }
 
 .toggle-icon {
@@ -508,4 +533,30 @@ button:disabled {
     background: white;  /* 主抽奖区域的卡片也保持不透明 */
     border: 1px solid rgba(255, 255, 255, 0.5);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* 设置按钮容器 */
+.settings-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+/* 取消按钮样式 */
+.cancel-btn {
+    background: #6c757d;
+}
+
+.cancel-btn:hover {
+    background: #5a6268;
+}
+
+/* 危险操作按钮样式 */
+.danger-btn {
+    background: #dc3545;
+}
+
+.danger-btn:hover {
+    background: #c82333;
 } 
