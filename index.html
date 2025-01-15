@@ -14,6 +14,24 @@
                 <div class="file-input">
                     <label>导入名单(Excel)：</label>
                     <input type="file" id="fileInput" accept=".xlsx,.xls">
+                    <div class="import-tips">
+                        <p>Excel文件格式说明：</p>
+                        <ul>
+                            <li>第一个工作表：人员名单
+                                <ul>
+                                    <li>必须包含"姓名"列（或name/Name）</li>
+                                    <li>可选包含"部门"列（或department/Department）</li>
+                                </ul>
+                            </li>
+                            <li>第二个工作表（可选）：奖品信息
+                                <ul>
+                                    <li>必须包含"奖品名称"列（或奖品/prize/Prize）</li>
+                                    <li>必须包含"数量"列（或count/Count）</li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <a href="template.xlsx" download>下载Excel模板</a>
+                    </div>
                 </div>
                 <div class="background-input">
                     <label>背景图片：</label>
@@ -26,6 +44,17 @@
                 <div class="winners-input">
                     <label>每轮人数：</label>
                     <input type="number" id="winnersPerRound" min="1" value="1">
+                </div>
+                <div class="prizes-setting">
+                    <h3>奖品设置</h3>
+                    <div class="prizes-list">
+                        <div class="prize-item">
+                            <input type="text" placeholder="奖品名称" class="prize-name">
+                            <input type="number" placeholder="数量" class="prize-count" min="1" value="1">
+                            <button class="remove-prize">删除</button>
+                        </div>
+                    </div>
+                    <button id="addPrize">添加奖品</button>
                 </div>
                 <button id="saveSettings">保存设置</button>
             </div>

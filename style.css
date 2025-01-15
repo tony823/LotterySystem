@@ -175,34 +175,47 @@ button:hover {
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    gap: 40px;
-    min-height: 60vh;
-    padding: 20px;
+    gap: 20px;
+    min-height: 40vh;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .winner-item {
     flex: 0 1 auto;
-    min-width: 200px;
-    max-width: 300px;
-    margin: 10px;
-    padding: 20px;
+    margin: 5px;
+    padding: 15px;
     text-align: center;
     animation: winner-show 0.5s ease-out;
     background: rgba(255, 255, 255, 0.9);
     border-radius: 15px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .winner-item .name {
-    font-size: 48px;
     font-weight: bold;
     color: #ff4444;
     margin-bottom: 5px;
+    word-break: break-all;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
 }
 
 .winner-item .department {
-    font-size: 24px;
     color: #666;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
 }
 
 @keyframes winner-show {
@@ -272,11 +285,11 @@ button:hover {
 .round-content {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s ease-out;
+    transition: max-height 0.5s ease-out;
 }
 
 .round-section.expanded .round-content {
-    max-height: 500px;
+    max-height: 2000px;
 }
 
 .round-section .toggle-icon {
@@ -291,6 +304,11 @@ button:hover {
 .round-content .winner-item {
     padding: 8px 15px;
     border-bottom: 1px solid #eee;
+    transition: background-color 0.2s ease;
+}
+
+.round-content .winner-item:hover {
+    background-color: #f5f5f5;
 }
 
 .round-content .winner-item:last-child {
@@ -324,4 +342,101 @@ button:hover {
 
 .export-btn:hover {
     background: rgba(255,255,255,0.3);
+}
+
+/* 奖品设置样式 */
+.prizes-setting {
+    margin: 15px 0;
+}
+
+.prizes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.prize-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.prize-item input {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.prize-name {
+    flex: 2;
+}
+
+.prize-count {
+    flex: 1;
+    width: 80px;
+}
+
+.remove-prize {
+    padding: 8px 12px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.remove-prize:hover {
+    background: #c82333;
+}
+
+#addPrize {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+}
+
+#addPrize:hover {
+    background: #218838;
+}
+
+.import-tips {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.import-tips p {
+    margin: 0 0 8px 0;
+    font-weight: bold;
+}
+
+.import-tips ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.import-tips ul ul {
+    margin: 5px 0;
+}
+
+.import-tips li {
+    margin-bottom: 5px;
+}
+
+.import-tips a {
+    display: inline-block;
+    margin-top: 10px;
+    color: #007bff;
+    text-decoration: none;
+}
+
+.import-tips a:hover {
+    text-decoration: underline;
 } 

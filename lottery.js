@@ -9,9 +9,20 @@ class LotterySystem {
         this.timer = null;
         this.roundStatus = new Map(); // 记录每轮抽奖状态
         
+        // 添加奖品数组
+        this.prizes = [];
+        
         this.initializeElements();
         this.bindEvents();
         this.initializeWinnerList();
+        this.initializePrizeSettings();
+        
+        // 添加窗口大小改变的监听
+        window.addEventListener('resize', () => {
+            if (this.roundStatus.get(this.currentRound)) {
+                this.calculateCardSize();
+            }
+        });
     }
 
     initializeElements() {
@@ -58,15 +69,17 @@ class LotterySystem {
         try {
             const data = await file.arrayBuffer();
             const workbook = XLSX.read(data);
-            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+            
+            // 读取人员名单（第一个工作表）
+            const peopleSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const peopleData = XLSX.utils.sheet_to_json(peopleSheet);
 
-            if (jsonData.length === 0) {
-                throw new Error('Excel文件中没有数据');
+            if (peopleData.length === 0) {
+                throw new Error('Excel文件中没有人员数据');
             }
 
-            // 检查数据格式并尝试不同的列名
-            this.people = jsonData.map(row => {
+            // 检查数据格式并导入人员名单
+            this.people = peopleData.map(row => {
                 const name = row['姓名'] || row['name'] || row['Name'] || row['NAME'];
                 const department = row['部门'] || row['department'] || row['Department'] || row['DEPARTMENT'];
                 
@@ -81,10 +94,44 @@ class LotterySystem {
                 };
             });
 
+            // 读取奖品信息（第二个工作表，如果存在）
+            if (workbook.SheetNames.length > 1) {
+                const prizesSheet = workbook.Sheets[workbook.SheetNames[1]];
+                const prizesData = XLSX.utils.sheet_to_json(prizesSheet);
+
+                if (prizesData.length > 0) {
+                    // 清空现有奖品列表
+                    const prizesList = document.querySelector('.prizes-list');
+                    prizesList.innerHTML = '';
+
+                    // 添加每个奖品到设置面板
+                    prizesData.forEach(prize => {
+                        const name = prize['奖品名称'] || prize['奖品'] || prize['prize'] || prize['Prize'];
+                        const count = prize['数量'] || prize['count'] || prize['Count'] || 1;
+
+                        if (name) {
+                            const prizeItem = document.createElement('div');
+                            prizeItem.className = 'prize-item';
+                            prizeItem.innerHTML = `
+                                <input type="text" placeholder="奖品名称" class="prize-name" value="${name}">
+                                <input type="number" placeholder="数量" class="prize-count" min="1" value="${count}">
+                                <button class="remove-prize">删除</button>
+                            `;
+                            prizesList.appendChild(prizeItem);
+
+                            // 添加删除按钮事件
+                            prizeItem.querySelector('.remove-prize').addEventListener('click', () => {
+                                prizeItem.remove();
+                            });
+                        }
+                    });
+                }
+            }
+
             if (this.people.length > 0) {
                 console.log('导入的数据:', this.people);
                 this.nameDisplay.textContent = '准备开始抽奖';
-                alert(`成功导入${this.people.length}个人员信息`);
+                alert(`成功导入${this.people.length}个人员信息${workbook.SheetNames.length > 1 ? '和奖品信息' : ''}`);
             }
 
         } catch (error) {
@@ -110,15 +157,20 @@ class LotterySystem {
     saveSettings() {
         this.totalRounds = parseInt(this.roundCount.value) || 1;
         this.winnersPerRound = parseInt(this.winnersPerRound.value) || 1;
+        
+        // 保存奖品信息
+        this.prizes = [];
+        document.querySelectorAll('.prize-item').forEach(item => {
+            const name = item.querySelector('.prize-name').value;
+            const count = parseInt(item.querySelector('.prize-count').value) || 1;
+            if (name) {
+                this.prizes.push({ name, count, remaining: count });
+            }
+        });
+
+        console.log('保存的奖品信息：', this.prizes);
         this.settingsPanel.style.display = 'none';
-        
-        // 重置所有轮次状态
-        this.roundStatus.clear();
-        this.winners.clear();
-        this.currentRound = 1;
-        
         this.updateDisplay();
-        this.nameDisplay.textContent = '准备开始抽奖';
     }
 
     toggleLottery() {
@@ -214,6 +266,9 @@ class LotterySystem {
             </div>
         `;
 
+        // 计算并应用卡片大小
+        this.calculateCardSize();
+
         // 添加延迟显示动画效果
         const winnerItems = this.nameDisplay.querySelectorAll('.winner-item');
         winnerItems.forEach((item, index) => {
@@ -235,7 +290,7 @@ class LotterySystem {
 
     // 添加中奖音效（可选）
     playWinSound() {
-        const audio = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAASAAAeMwAUFBQUFCIiIiIiIjAwMDAwPz8/Pz8/TU1NTU1NW1tbW1tbaGhoaGhoaHd3d3d3d4aGhoaGhpSUlJSUlKmpqampqbe3t7e3t8bGxsbGxtTU1NTU1OPj4+Pj4/H//////////wAAAABMYXZjNTguMTMAAAAAAAAAAAAAAAAkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//tQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV');
+        const audio = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAASAAAeMwAUFBQUFCIiIiIiIjAwMDAwPz8/Pz8/TU1NTU1NW1tbW1tbaGhoaGhoaHd3d3d3d4aGhoaGhpSUlJSUlKmpqampqbe3t7e3t8bGxsbGxtTU1NTU1OPj4+Pj4/H//////////wAAAABMYXZjNTguMTMAAAAAAAAAAAAAAAAkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//tQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV');
         audio.play();
     }
 
@@ -417,6 +472,65 @@ class LotterySystem {
         // 生成文件并下载
         const fileName = `抽奖结果_${new Date().toLocaleDateString()}.xlsx`;
         XLSX.writeFile(wb, fileName);
+    }
+
+    calculateCardSize() {
+        const container = document.querySelector('.winners-container');
+        if (!container) return;
+
+        const containerWidth = container.clientWidth;
+        const containerHeight = window.innerHeight * 0.6; // 使用60%的视窗高度
+        const count = this.winnersPerRound;
+
+        // 计算最佳的行列数
+        let cols = Math.ceil(Math.sqrt(count));
+        let rows = Math.ceil(count / cols);
+
+        // 确保行数不会太多
+        while (rows > 3 && cols < count) {
+            cols++;
+            rows = Math.ceil(count / cols);
+        }
+
+        // 计算卡片大小
+        const maxCardWidth = (containerWidth - (cols + 1) * 20) / cols; // 20px为间距
+        const maxCardHeight = (containerHeight - (rows + 1) * 20) / rows;
+
+        // 使用较小的值确保完全显示
+        const cardSize = Math.min(maxCardWidth, maxCardHeight, 300); // 最大不超过300px
+
+        // 计算字体大小
+        const nameSize = Math.max(Math.min(cardSize / 4, 48), 24); // 最小24px，最大48px
+        const deptSize = Math.max(Math.min(cardSize / 6, 24), 14); // 最小14px，最大24px
+
+        // 应用样式
+        const cards = document.querySelectorAll('.winner-item');
+        cards.forEach(card => {
+            card.style.width = `${cardSize}px`;
+            card.style.height = `${cardSize}px`;
+            card.querySelector('.name').style.fontSize = `${nameSize}px`;
+            card.querySelector('.department').style.fontSize = `${deptSize}px`;
+        });
+    }
+
+    initializePrizeSettings() {
+        const addPrizeBtn = document.getElementById('addPrize');
+        addPrizeBtn.addEventListener('click', () => {
+            const prizesList = document.querySelector('.prizes-list');
+            const prizeItem = document.createElement('div');
+            prizeItem.className = 'prize-item';
+            prizeItem.innerHTML = `
+                <input type="text" placeholder="奖品名称" class="prize-name">
+                <input type="number" placeholder="数量" class="prize-count" min="1" value="1">
+                <button class="remove-prize">删除</button>
+            `;
+            prizesList.appendChild(prizeItem);
+
+            // 添加删除按钮事件
+            prizeItem.querySelector('.remove-prize').addEventListener('click', () => {
+                prizeItem.remove();
+            });
+        });
     }
 }
 
