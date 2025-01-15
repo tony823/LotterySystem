@@ -8,12 +8,10 @@ class LotterySystem {
         this.isRunning = false;
         this.timer = null;
         this.roundStatus = new Map(); // 记录每轮抽奖状态
+        this.prizes = []; // 存储奖品信息
         
-        // 添加奖品数组
-        this.prizes = [];
-        
-        this.initializeElements();
-        this.bindEvents();
+        this.initializeElements(); // 先初始化所有元素
+        this.bindEvents(); // 再绑定事件
         this.initializeWinnerList();
         this.initializePrizeSettings();
         
@@ -43,6 +41,7 @@ class LotterySystem {
         this.nextRoundBtn = document.getElementById('nextRound');
         this.settingsBtn = document.getElementById('settingsBtn');
         this.saveSettingsBtn = document.getElementById('saveSettings');
+        this.drawPrizeBtn = document.getElementById('drawPrizeBtn'); // 移到这里
     }
 
     bindEvents() {
@@ -53,6 +52,7 @@ class LotterySystem {
         this.nextRoundBtn.addEventListener('click', this.nextRound.bind(this));
         this.settingsBtn.addEventListener('click', () => this.settingsPanel.style.display = 'block');
         this.saveSettingsBtn.addEventListener('click', this.saveSettings.bind(this));
+        this.drawPrizeBtn.addEventListener('click', this.drawAllPrizes.bind(this));
         
         // 添加空格键控制
         document.addEventListener('keyup', (e) => {
@@ -171,6 +171,7 @@ class LotterySystem {
         console.log('保存的奖品信息：', this.prizes);
         this.settingsPanel.style.display = 'none';
         this.updateDisplay();
+        this.updateButtonStatus();
     }
 
     toggleLottery() {
@@ -285,6 +286,8 @@ class LotterySystem {
 
         // 标记当前轮次已抽奖
         this.roundStatus.set(this.currentRound, true);
+        
+        // 更新所有按钮状态
         this.updateButtonStatus();
     }
 
@@ -338,6 +341,7 @@ class LotterySystem {
                             <div class="winner-item">
                                 <div class="name">${w.name}</div>
                                 <div class="department">${w.department}</div>
+                                ${w.prize ? `<div class="prize">${w.prize}</div>` : ''}
                             </div>
                         `).join('')}
                     </div>
@@ -364,21 +368,8 @@ class LotterySystem {
             
             // 如果这轮已经抽过奖，显示结果
             if (this.roundStatus.get(this.currentRound)) {
-                const winners = this.winners.get(this.currentRound);
-                if (winners) {
-                    this.nameDisplay.innerHTML = `
-                        <div class="winners-container">
-                            ${winners.map(winner => `
-                                <div class="winner-item">
-                                    <div class="name">${winner.name}</div>
-                                    <div class="department">${winner.department}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    `;
-                }
+                this.updateWinnerDisplay();
             } else {
-                // 如果没抽过奖，显示默认状态
                 this.nameDisplay.textContent = '准备开始抽奖';
             }
         }
@@ -392,37 +383,31 @@ class LotterySystem {
             
             // 如果这轮已经抽过奖，显示结果
             if (this.roundStatus.get(this.currentRound)) {
-                const winners = this.winners.get(this.currentRound);
-                if (winners) {
-                    this.nameDisplay.innerHTML = `
-                        <div class="winners-container">
-                            ${winners.map(winner => `
-                                <div class="winner-item">
-                                    <div class="name">${winner.name}</div>
-                                    <div class="department">${winner.department}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    `;
-                }
+                this.updateWinnerDisplay();
             } else {
-                // 如果没抽过奖，显示默认状态
                 this.nameDisplay.textContent = '准备开始抽奖';
             }
         }
     }
 
     updateButtonStatus() {
-        // 如果当前轮次已抽奖，禁用开始按钮
-        if (this.roundStatus.get(this.currentRound)) {
-            this.startBtn.disabled = true;
-            this.startBtn.style.opacity = '0.5';
-            this.startBtn.style.cursor = 'not-allowed';
-        } else {
-            this.startBtn.disabled = false;
-            this.startBtn.style.opacity = '1';
-            this.startBtn.style.cursor = 'pointer';
-        }
+        // 检查当前轮次是否已抽奖
+        const hasDrawn = this.roundStatus.get(this.currentRound);
+        
+        // 控制开始抽奖按钮
+        this.startBtn.disabled = hasDrawn;
+        this.startBtn.style.opacity = hasDrawn ? '0.5' : '1';
+        this.startBtn.style.cursor = hasDrawn ? 'not-allowed' : 'pointer';
+
+        // 控制抽取奖品按钮
+        // 只有在已抽奖且有可用奖品的情况下才启用
+        const currentWinners = this.winners.get(this.currentRound);
+        const hasUndrawnWinners = currentWinners && currentWinners.some(w => !w.prize);
+        const hasAvailablePrizes = this.prizes && this.prizes.some(p => p.remaining > 0);
+        
+        this.drawPrizeBtn.disabled = !(hasDrawn && hasUndrawnWinners && hasAvailablePrizes);
+        this.drawPrizeBtn.style.opacity = this.drawPrizeBtn.disabled ? '0.5' : '1';
+        this.drawPrizeBtn.style.cursor = this.drawPrizeBtn.disabled ? 'not-allowed' : 'pointer';
     }
 
     updateDisplay() {
@@ -445,6 +430,7 @@ class LotterySystem {
                     '轮次': `第${round}轮`,
                     '姓名': winner.name,
                     '部门': winner.department,
+                    '奖品': winner.prize || '未抽取'  // 添加奖品列
                 });
             });
         });
@@ -460,9 +446,10 @@ class LotterySystem {
 
         // 设置列宽
         const colWidths = [
-            { wch: 8 },  // 轮次列宽
-            { wch: 15 }, // 姓名列宽
-            { wch: 20 }, // 部门列宽
+            { wch: 8 },   // 轮次列宽
+            { wch: 15 },  // 姓名列宽
+            { wch: 20 },  // 部门列宽
+            { wch: 30 }   // 奖品列宽，设置大一点以适应长奖品名称
         ];
         ws['!cols'] = colWidths;
 
@@ -502,6 +489,7 @@ class LotterySystem {
         // 计算字体大小
         const nameSize = Math.max(Math.min(cardSize / 4, 48), 24); // 最小24px，最大48px
         const deptSize = Math.max(Math.min(cardSize / 6, 24), 14); // 最小14px，最大24px
+        const prizeSize = Math.max(Math.min(cardSize / 8, 16), 12); // 最小12px，最大16px
 
         // 应用样式
         const cards = document.querySelectorAll('.winner-item');
@@ -510,6 +498,15 @@ class LotterySystem {
             card.style.height = `${cardSize}px`;
             card.querySelector('.name').style.fontSize = `${nameSize}px`;
             card.querySelector('.department').style.fontSize = `${deptSize}px`;
+            
+            // 为奖品设置字体大小
+            const prizeElement = card.querySelector('.prize');
+            if (prizeElement) {
+                const prizeText = prizeElement.textContent;
+                // 根据文本长度调整字体大小
+                const adjustedSize = Math.max(prizeSize * (20 / Math.max(prizeText.length, 20)), 12);
+                prizeElement.style.fontSize = `${adjustedSize}px`;
+            }
         });
     }
 
@@ -531,6 +528,68 @@ class LotterySystem {
                 prizeItem.remove();
             });
         });
+    }
+
+    // 添加抽取所有奖品的方法
+    drawAllPrizes() {
+        const currentWinners = this.winners.get(this.currentRound);
+        if (!currentWinners) return;
+
+        // 检查是否有足够的奖品
+        const availablePrizes = this.prizes.filter(p => p.remaining > 0);
+        if (availablePrizes.length === 0) {
+            alert('所有奖品已抽完！');
+            return;
+        }
+
+        // 为每个未抽中奖品的获奖者抽取奖品
+        currentWinners.forEach(winner => {
+            if (!winner.prize) {
+                const prize = this.drawPrizeForWinner();
+                if (prize) {
+                    winner.prize = prize;
+                }
+            }
+        });
+
+        // 更新显示
+        this.updateWinnerDisplay();
+        this.updateWinnerList();
+        
+        // 更新按钮状态
+        this.updateButtonStatus();
+    }
+
+    // 为单个获奖者抽取奖品
+    drawPrizeForWinner() {
+        const availablePrizes = this.prizes.filter(p => p.remaining > 0);
+        if (availablePrizes.length === 0) return null;
+
+        const prizeIndex = Math.floor(Math.random() * availablePrizes.length);
+        const prize = availablePrizes[prizeIndex];
+        prize.remaining--;
+        return prize.name;
+    }
+
+    // 更新获奖者显示
+    updateWinnerDisplay() {
+        const winners = this.winners.get(this.currentRound);
+        if (!winners) return;
+
+        this.nameDisplay.innerHTML = `
+            <div class="winners-container">
+                ${winners.map(winner => `
+                    <div class="winner-item">
+                        <div class="name">${winner.name}</div>
+                        <div class="department">${winner.department}</div>
+                        ${winner.prize ? `<div class="prize">${winner.prize}</div>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        // 重新计算卡片大小
+        this.calculateCardSize();
     }
 }
 

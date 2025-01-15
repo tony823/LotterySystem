@@ -439,4 +439,50 @@ button:hover {
 
 .import-tips a:hover {
     text-decoration: underline;
+}
+
+/* 修改奖品显示样式 */
+.winner-item .prize {
+    color: #ff8800;
+    font-weight: bold;
+    margin-top: 8px;
+    min-font-size: 12px;
+    width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 3px 6px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 136, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 调整emoji大小 */
+.winner-item .prize::before {
+    content: '🎁';
+    font-size: 1em;
+    margin-right: 3px;
+    line-height: 1;
+}
+
+/* 调整中奖名单中的奖品显示 */
+.round-content .winner-item .prize {
+    font-size: 12px;
+    margin-top: 3px;
+    background: rgba(255, 136, 0, 0.1);
+    border: none;
+}
+
+.round-content .winner-item .prize::before {
+    font-size: 1em;
+}
+
+/* 禁用状态的按钮样式 */
+button:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.7;
 } 
