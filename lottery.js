@@ -937,12 +937,16 @@ class LotterySystem {
         this.bgmVolume = document.getElementById('bgmVolume');
         this.soundVolume = document.getElementById('soundVolume');
 
-        // 设置初始状态 - 默认开启背景音乐
+        // 设置初始状态 - 默认开启背景音乐和音效
         this.isBgmEnabled = true;
         this.isSoundEnabled = true;
         this.bgm.volume = this.bgmVolume.value / 100;
         this.rollSound.volume = this.soundVolume.value / 100;
         this.winSound.volume = this.soundVolume.value / 100;
+
+        // 初始化时设置按钮状态为激活
+        this.bgmToggleBtn.classList.add('active');
+        this.soundToggleBtn.classList.add('active');
 
         // 初始化时自动播放背景音乐
         this.bgmToggleBtn.classList.add('active');
