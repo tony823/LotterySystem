@@ -24,6 +24,9 @@ class LotterySystem {
         
         // 尝试从本地存储恢复数据
         this.restoreFromStorage();
+        
+        // 初始化音频
+        this.initializeAudio();
     }
 
     initializeElements() {
@@ -46,6 +49,11 @@ class LotterySystem {
         this.saveSettingsBtn = document.getElementById('saveSettings');
         this.cancelSettingsBtn = document.getElementById('cancelSettings');
         this.drawPrizeBtn = document.getElementById('drawPrizeBtn'); // 移到这里
+        
+        // 添加音频文件输入元素
+        this.bgmInput = document.getElementById('bgmInput');
+        this.rollSoundInput = document.getElementById('rollSoundInput');
+        this.winSoundInput = document.getElementById('winSoundInput');
     }
 
     bindEvents() {
@@ -366,6 +374,29 @@ class LotterySystem {
         this.startBtn.textContent = '停止';
         this.nameDisplay.classList.add('rolling');
 
+        // 先停止背景音乐
+        if (this.isSoundEnabled) {
+            this.bgm.pause();
+            // 确保抽奖音效从头开始播放
+            this.rollSound.currentTime = 0;
+            this.rollSound.loop = true;
+            
+            // 确保抽奖音效播放
+            const playRollSound = () => {
+                this.rollSound.play().catch(error => {
+                    console.error('播放抽奖音效失败:', error);
+                });
+            };
+            
+            playRollSound();
+            // 如果音效意外停止，重新播放
+            this.rollSound.addEventListener('pause', () => {
+                if (this.isRunning) {
+                    playRollSound();
+                }
+            });
+        }
+
         // 创建临时数组用于滚动显示
         let tempWinners = [];
         for (let i = 0; i < this.winnersCount; i++) {
@@ -450,6 +481,27 @@ class LotterySystem {
         
         // 保存状态
         this.saveToStorage();
+
+        // 停止抽奖音效并播放中奖音效
+        if (this.isSoundEnabled) {
+            // 确保抽奖音效完全停止
+            this.rollSound.loop = false;
+            this.rollSound.pause();
+            this.rollSound.currentTime = 0;
+
+            // 播放中奖音效
+            this.winSound.currentTime = 0;
+            this.winSound.play().then(() => {
+                // 中奖音效播放完成后，如果背景音乐开启，则恢复播放
+                this.winSound.addEventListener('ended', () => {
+                    if (this.isBgmEnabled) {
+                        this.bgm.play();
+                    }
+                }, { once: true });
+            }).catch(error => {
+                console.error('播放中奖音效失败:', error);
+            });
+        }
     }
 
     // 添加中奖音效（可选）
@@ -774,7 +826,13 @@ class LotterySystem {
             totalRounds: this.totalRounds,
             winnersCount: this.winnersCount,
             roundStatus: Array.from(this.roundStatus.entries()),
-            prizes: this.prizes
+            prizes: this.prizes,
+            audioSettings: {
+                isBgmEnabled: this.isBgmEnabled,
+                isSoundEnabled: this.isSoundEnabled,
+                bgmVolume: this.bgmVolume.value,
+                soundVolume: this.soundVolume.value
+            }
         };
         localStorage.setItem('lotteryData', JSON.stringify(data));
     }
@@ -823,6 +881,32 @@ class LotterySystem {
                         prizeItem.remove();
                     });
                 });
+
+                // 恢复音频设置
+                if (data.audioSettings) {
+                    this.isBgmEnabled = data.audioSettings.isBgmEnabled;
+                    this.isSoundEnabled = data.audioSettings.isSoundEnabled;
+                    this.bgmVolume.value = data.audioSettings.bgmVolume;
+                    this.soundVolume.value = data.audioSettings.soundVolume;
+                    
+                    if (this.isBgmEnabled) {
+                        this.bgmToggleBtn.classList.add('active');
+                        this.bgm.volume = this.bgmVolume.value / 100;
+                        this.bgm.play();
+                    }
+                    if (this.isSoundEnabled) {
+                        this.soundToggleBtn.classList.add('active');
+                    }
+                }
+
+                // 恢复自定义音频
+                const bgmData = localStorage.getItem('lottery_bgm_audio');
+                const rollSoundData = localStorage.getItem('lottery_roll_audio');
+                const winSoundData = localStorage.getItem('lottery_win_audio');
+
+                if (bgmData) this.bgm.src = bgmData;
+                if (rollSoundData) this.rollSound.src = rollSoundData;
+                if (winSoundData) this.winSound.src = winSoundData;
             } catch (error) {
                 console.error('恢复数据失败:', error);
                 this.clearStorage();
@@ -834,8 +918,108 @@ class LotterySystem {
     clearStorage() {
         if (confirm('确定要清除所有抽奖数据吗？此操作不可恢复！')) {
             localStorage.removeItem('lotteryData');
-            location.reload(); // 刷新页面以重置所有状态
+            localStorage.removeItem('lottery_bgm_audio');
+            localStorage.removeItem('lottery_roll_audio');
+            localStorage.removeItem('lottery_win_audio');
+            location.reload();
         }
+    }
+
+    initializeAudio() {
+        // 获取音频元素
+        this.bgm = document.getElementById('bgm');
+        this.rollSound = document.getElementById('rollSound');
+        this.winSound = document.getElementById('winSound');
+        
+        // 获取控制元素
+        this.bgmToggleBtn = document.getElementById('bgmToggleBtn');
+        this.soundToggleBtn = document.getElementById('soundToggleBtn');
+        this.bgmVolume = document.getElementById('bgmVolume');
+        this.soundVolume = document.getElementById('soundVolume');
+
+        // 设置初始状态 - 默认开启背景音乐
+        this.isBgmEnabled = true;
+        this.isSoundEnabled = true;
+        this.bgm.volume = this.bgmVolume.value / 100;
+        this.rollSound.volume = this.soundVolume.value / 100;
+        this.winSound.volume = this.soundVolume.value / 100;
+
+        // 初始化时自动播放背景音乐
+        this.bgmToggleBtn.classList.add('active');
+        this.bgm.play().catch(() => {
+            // 如果自动播放失败（浏览器策略），等待用户第一次点击时播放
+            const playBgm = () => {
+                this.bgm.play();
+                document.removeEventListener('click', playBgm);
+            };
+            document.addEventListener('click', playBgm, { once: true });
+        });
+
+        // 监听中奖音效结束事件
+        this.winSound.addEventListener('ended', () => {
+            if (this.isBgmEnabled) {
+                this.bgm.play();
+            }
+        });
+
+        // 绑定事件
+        this.bgmToggleBtn.addEventListener('click', () => {
+            this.isBgmEnabled = !this.isBgmEnabled;
+            this.bgmToggleBtn.classList.toggle('active');
+            if (this.isBgmEnabled) {
+                this.bgm.play();
+            } else {
+                this.bgm.pause();
+            }
+        });
+
+        this.soundToggleBtn.addEventListener('click', () => {
+            this.isSoundEnabled = !this.isSoundEnabled;
+            this.soundToggleBtn.classList.toggle('active');
+        });
+
+        this.bgmVolume.addEventListener('input', () => {
+            this.bgm.volume = this.bgmVolume.value / 100;
+        });
+
+        this.soundVolume.addEventListener('input', () => {
+            this.rollSound.volume = this.soundVolume.value / 100;
+            this.winSound.volume = this.soundVolume.value / 100;
+        });
+
+        // 添加音频文件上传处理
+        this.bgmInput.addEventListener('change', (e) => this.handleAudioUpload(e, 'bgm'));
+        this.rollSoundInput.addEventListener('change', (e) => this.handleAudioUpload(e, 'roll'));
+        this.winSoundInput.addEventListener('change', (e) => this.handleAudioUpload(e, 'win'));
+    }
+
+    handleAudioUpload(event, type) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const audioData = e.target.result;
+            // 保存到 localStorage
+            localStorage.setItem(`lottery_${type}_audio`, audioData);
+            
+            // 更新对应的音频元素
+            switch(type) {
+                case 'bgm':
+                    this.bgm.src = audioData;
+                    if (this.isBgmEnabled) {
+                        this.bgm.play();
+                    }
+                    break;
+                case 'roll':
+                    this.rollSound.src = audioData;
+                    break;
+                case 'win':
+                    this.winSound.src = audioData;
+                    break;
+            }
+        };
+        reader.readAsDataURL(file);
     }
 }
 

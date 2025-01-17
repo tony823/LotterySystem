@@ -37,6 +37,18 @@
                     <label>背景图片：</label>
                     <input type="file" id="bgInput" accept="image/*">
                 </div>
+                <div class="audio-input">
+                    <label>背景音乐：</label>
+                    <input type="file" id="bgmInput" accept="audio/*">
+                </div>
+                <div class="audio-input">
+                    <label>抽奖音效：</label>
+                    <input type="file" id="rollSoundInput" accept="audio/*">
+                </div>
+                <div class="audio-input">
+                    <label>中奖音效：</label>
+                    <input type="file" id="winSoundInput" accept="audio/*">
+                </div>
                 <div class="rounds-input">
                     <label>抽奖轮数：</label>
                     <input type="number" id="roundCount" min="1" value="1">
@@ -88,10 +100,25 @@
             <div class="float-menu-content">
                 <button id="settingsBtn">设置</button>
                 <button id="clearDataBtn" class="danger-btn">清除数据</button>
+                <div class="music-control">
+                    <button id="bgmToggleBtn" title="开/关背景音乐">🎵</button>
+                    <input type="range" id="bgmVolume" min="0" max="100" value="50" title="背景音乐音量">
+                    <button id="soundToggleBtn" title="开/关音效">🔊</button>
+                    <input type="range" id="soundVolume" min="0" max="100" value="80" title="音效音量">
+                </div>
             </div>
         </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="lottery.js"></script>
+    <audio id="bgm" loop preload="auto">
+        <source src="sounds/background.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="rollSound" preload="auto">
+        <source src="sounds/roll.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="winSound" preload="auto">
+        <source src="sounds/win.mp3" type="audio/mpeg">
+    </audio>
 </body>
 </html> 
